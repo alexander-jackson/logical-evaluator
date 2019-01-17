@@ -8,14 +8,32 @@ fn shunting_yard(expression: String) -> String {
     let precedence: HashMap<char, i32> = [
         ('|', 1),
         ('&', 2),
-        ('!', 3)
+        ('!', 3),
+        ('(', 4)
     ].iter().cloned().collect();
 
     for c in expression.chars() {
         if c.is_alphabetic() {
             output.push(c);
-        } else {
-            while stack.len() > 0 && precedence[&stack[0]] > precedence[&c] {
+        }
+        else if c == '(' {
+            stack.push(c);
+        }
+        else if c == ')' {
+            let mut top = stack.pop().unwrap();
+
+            while top != '(' {
+                output.push(top);
+
+                if stack.len() == 0 {
+                    break;
+                }
+
+                top = stack.pop().unwrap();
+            }
+        }
+        else {
+            while stack.len() > 0 && precedence[&stack[stack.len() - 1]] > precedence[&c] && stack[stack.len() - 1] != '(' {
                 output.push(stack.pop().unwrap());
             }
 
@@ -95,5 +113,9 @@ fn main() {
     println!("Valuation: {}", valuation);
 
     let ast = shunting_yard(expression.to_string());
+    println!("Parsed: {}", ast);
     println!("Evaluation: {}", evaluate(ast, valuation.to_string()));
 }
+
+#[cfg(test)]
+mod tests;
