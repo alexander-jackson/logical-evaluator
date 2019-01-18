@@ -45,9 +45,7 @@ fn shunting_yard(expression: String) -> String {
         output.push(stack.pop().unwrap());
     }
 
-    let parsed: String = output.into_iter().collect();
-
-    return parsed;
+    return output.into_iter().collect();
 }
 
 fn get_value(atom: char, map: &HashMap<char, bool>) -> bool {
