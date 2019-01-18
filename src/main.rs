@@ -71,31 +71,27 @@ fn evaluate(ast: String, valuation: String) -> bool {
         if c.is_alphabetic() {
             stack.push(c);
         } else {
-            let op = c;
-
             let a: bool = get_value(stack.pop().unwrap(), &values);
             let b: bool = get_value(stack.pop().unwrap(), &values);
 
-            let mut val: bool = false;
+            let val: bool = match c {
+                '&' => a & b,
+                '|' => a | b,
+                _ => panic!("Unexpected operation: {}", c)
+            };
 
-            if op == '&' {
-                val = a & b;
-            } else if op == '|' {
-                val = a | b;
-            }
-
-            if val {
-                stack.push('T');
-            } else {
-                stack.push('F');
-            }
+            stack.push(
+                match val {
+                    true => 'T',
+                    false => 'F'
+                }
+            );
         }
     }
 
-    if stack.pop().unwrap() == 'T' {
-        return true;
-    } else {
-        return false;
+    return match stack.pop().unwrap() {
+        'T' => true,
+        _ => false
     }
 }
 
