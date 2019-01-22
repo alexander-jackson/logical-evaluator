@@ -6,6 +6,7 @@ fn shunting_yard(expression: &String) -> String {
     let mut stack: Vec<char> = Vec::new();
 
     let precedence: HashMap<char, i32> = [
+        ('>', 0),
         ('|', 1),
         ('&', 2),
         ('!', 3),
@@ -86,6 +87,7 @@ fn evaluate_operator(op: &char, stack: &mut Vec<char>, valuation: &HashMap<char,
         '!' => !first,
         '&' => first & second,
         '|' => first | second,
+        '>' => first | !second,
         _ => panic!("Unexpected operation: {}", op)
     };
 }
