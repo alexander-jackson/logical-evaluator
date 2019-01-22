@@ -1,7 +1,7 @@
 use std::env;
 use std::collections::HashMap;
 
-fn shunting_yard(expression: String) -> String {
+fn shunting_yard(expression: &String) -> String {
     let mut output: Vec<char> = Vec::new();
     let mut stack: Vec<char> = Vec::new();
 
@@ -49,28 +49,40 @@ fn shunting_yard(expression: String) -> String {
 }
 
 fn get_value(atom: char, map: &HashMap<char, bool>) -> bool {
+    if atom == 'T' {
+        return true;
+    }
+    else if atom == 'F' {
+        return false;
+    }
+
     return match map.get(&atom) {
-        Some(_v) => true,
+        Some(_v) => *_v,
         None => false
     };
 }
 
-fn evaluate(ast: String, valuation: String) -> bool {
-    let mut stack: Vec<char> = Vec::new();
-    let mut values: HashMap<char, bool> = HashMap::new();
+fn generate_valuation(set_variables: &String) -> HashMap<char, bool> {
+    let mut valuation: HashMap<char, bool> = HashMap::new();
 
-    for c in valuation.chars() {
-        values.insert(c, true);
+    for c in set_variables.chars() {
+        valuation.insert(c, true);
     }
 
-    values.insert('T', true);
+    valuation.insert('T', true);
+
+    return valuation;
+}
+
+fn evaluate(ast: &String, valuation: &HashMap<char, bool>) -> bool {
+    let mut stack: Vec<char> = Vec::new();
 
     for c in ast.chars() {
         if c.is_alphabetic() {
             stack.push(c);
         } else {
-            let a: bool = get_value(stack.pop().unwrap(), &values);
-            let b: bool = get_value(stack.pop().unwrap(), &values);
+            let a: bool = get_value(stack.pop().unwrap(), &valuation);
+            let b: bool = get_value(stack.pop().unwrap(), &valuation);
 
             let val: bool = match c {
                 '&' => a & b,
@@ -93,6 +105,54 @@ fn evaluate(ast: String, valuation: String) -> bool {
     }
 }
 
+fn generate_truth_table(expression: String) {
+    // Generate the ast
+    let ast: String = shunting_yard(&expression);
+
+    // Find the variables in the expression
+    let mut variables: Vec<char> = Vec::new();
+
+    for c in ast.chars() {
+        if c.is_alphabetic() && !variables.contains(&c) {
+            variables.push(c);
+        }
+    }
+
+    // Generate the initial HashMap
+    let mut valuation: HashMap<char, bool> = HashMap::new();
+    let iterations = 2 << (variables.len() - 1);
+
+    for c in &variables {
+        valuation.insert(*c, false);
+
+        print!("{}\t", c);
+    }
+
+    println!("result:");
+
+    for bitmask in 0..iterations {
+        // Iterate the variables
+        for i in 0..variables.len() {
+            if bitmask & (1 << i) > 0 {
+                valuation.insert(variables[i], true);
+            } else {
+                valuation.insert(variables[i], false);
+            }
+        }
+
+        for c in &variables {
+            match valuation.get(&c) {
+                Some(x) => print!("{}\t", x),
+                None => panic!("Variable didn't exist in the HashMap")
+            };
+        }
+
+        println!("{}", evaluate(&ast, &valuation));
+    }
+
+    println!("");
+}
+
 fn main() {
     let args: Vec<String> = env::args().collect();
 
@@ -106,9 +166,10 @@ fn main() {
     println!("Expression: {}", expression);
     println!("Valuation: {}", valuation);
 
-    let ast = shunting_yard(expression.to_string());
+    let ast = shunting_yard(expression);
     println!("Parsed: {}", ast);
-    println!("Evaluation: {}", evaluate(ast, valuation.to_string()));
+
+    generate_truth_table(expression.to_string());
 }
 
 #[cfg(test)]
