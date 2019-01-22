@@ -74,6 +74,22 @@ fn generate_valuation(set_variables: &String) -> HashMap<char, bool> {
     return valuation;
 }
 
+fn evaluate_operator(op: &char, stack: &mut Vec<char>, valuation: &HashMap<char, bool>) -> bool {
+    let first: bool = get_value(stack.pop().unwrap(), &valuation);
+
+    let second: bool = match *op {
+        '!' => false,
+        _ => get_value(stack.pop().unwrap(), &valuation)
+    };
+
+    return match op {
+        '!' => !first,
+        '&' => first & second,
+        '|' => first | second,
+        _ => panic!("Unexpected operation: {}", op)
+    };
+}
+
 fn evaluate(ast: &String, valuation: &HashMap<char, bool>) -> bool {
     let mut stack: Vec<char> = Vec::new();
 
@@ -81,14 +97,7 @@ fn evaluate(ast: &String, valuation: &HashMap<char, bool>) -> bool {
         if c.is_alphabetic() {
             stack.push(c);
         } else {
-            let a: bool = get_value(stack.pop().unwrap(), &valuation);
-            let b: bool = get_value(stack.pop().unwrap(), &valuation);
-
-            let val: bool = match c {
-                '&' => a & b,
-                '|' => a | b,
-                _ => panic!("Unexpected operation: {}", c)
-            };
+            let val: bool = evaluate_operator(&c, &mut stack, &valuation);
 
             stack.push(
                 match val {
