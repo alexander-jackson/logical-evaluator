@@ -35,6 +35,9 @@ fn shunting_yard(expression: &String) -> String {
                 top = stack.pop().unwrap();
             }
         }
+        else if c == ' ' {
+            continue;
+        }
         else {
             while stack.len() > 0 && precedence[&stack[stack.len() - 1]] > precedence[&c] && stack[stack.len() - 1] != '(' {
                 output.push(stack.pop().unwrap());
