@@ -17,6 +17,14 @@ fn shunting_yard_only_two_or_test() {
 }
 
 #[test]
+fn shunting_yard_not_test() {
+    let input = "!p".to_owned();
+    let output = shunting_yard(&input);
+    let expected = "p!";
+    assert_eq!(output, expected);
+}
+
+#[test]
 fn shunting_yard_and_then_or_test() {
     let input = "p&q|r".to_owned();
     let output = shunting_yard(&input);
