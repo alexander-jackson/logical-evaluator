@@ -101,6 +101,24 @@ fn evaluate_or_operation_test() {
 }
 
 #[test]
+fn evaluate_not_operation_test() {
+    let input = "p!".to_owned();
+    let mut valuation = HashMap::new();
+
+    valuation.insert('p', true);
+
+    let output = evaluate(&input, &valuation);
+    let expected = false;
+    assert_eq!(output, expected);
+
+    valuation.insert('p', false);
+
+    let output = evaluate(&input, &valuation);
+    let expected = true;
+    assert_eq!(output, expected);
+}
+
+#[test]
 fn shunting_yard_with_brackets_test() {
     let input = "p&(q|r)".to_owned();
     let output = shunting_yard(&input);
