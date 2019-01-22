@@ -49,6 +49,34 @@ fn shunting_yard_or_then_and_test() {
 }
 
 #[test]
+fn shunting_yard_with_spaces_test() {
+    let input = "p & q".to_owned();
+    let output = shunting_yard(&input);
+    let expected = "pq&";
+    assert_eq!(output, expected);
+
+    let input = "p | q".to_owned();
+    let output = shunting_yard(&input);
+    let expected = "pq|";
+    assert_eq!(output, expected);
+
+    let input = "p > q".to_owned();
+    let output = shunting_yard(&input);
+    let expected = "pq>";
+    assert_eq!(output, expected);
+
+    let input = "p & q | r".to_owned();
+    let output = shunting_yard(&input);
+    let expected = "pq&r|";
+    assert_eq!(output, expected);
+
+    let input = "p | q & r".to_owned();
+    let output = shunting_yard(&input);
+    let expected = "pqr&|";
+    assert_eq!(output, expected);
+}
+
+#[test]
 fn evaluate_and_operation_test() {
     let input = "pq&".to_owned();
     let mut valuation = HashMap::new();
