@@ -1,6 +1,8 @@
 use std::env;
 use std::collections::HashMap;
 
+use colored::*;
+
 fn shunting_yard(expression: &String) -> String {
     let mut output: Vec<char> = Vec::new();
     let mut stack: Vec<char> = Vec::new();
@@ -154,16 +156,16 @@ fn generate_truth_table(expression: String) {
         for c in &variables {
             match valuation.get(&c) {
                 Some(x) => match x {
-                    true => print!("T\t"),
-                    false => print!("F\t"),
+                    true => print!("{}", "T\t".green()),
+                    false => print!("{}", "F\t".red()),
                 },
                 None => panic!("Variable didn't exist in the HashMap")
             };
         }
 
         match evaluate(&ast, &valuation) {
-            true => println!("T"),
-            false => println!("F")
+            true => println!("{}", "T".green()),
+            false => println!("{}", "F".red())
         }
     }
 
