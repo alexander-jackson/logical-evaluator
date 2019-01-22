@@ -2,6 +2,7 @@ use std::env;
 use std::collections::HashMap;
 
 use colored::*;
+use clap::App;
 
 fn shunting_yard(expression: &String) -> String {
     let mut output: Vec<char> = Vec::new();
@@ -118,7 +119,7 @@ fn evaluate(ast: &String, valuation: &HashMap<char, bool>) -> bool {
     }
 }
 
-fn generate_truth_table(expression: String) {
+fn generate_truth_table(expression: &String) {
     // Generate the ast
     let ast: String = shunting_yard(&expression);
 
@@ -173,22 +174,30 @@ fn generate_truth_table(expression: String) {
 }
 
 fn main() {
-    let args: Vec<String> = env::args().collect();
+    let yaml = clap::load_yaml!("../cli.yml");
+    let matches = App::from_yaml(yaml).get_matches();
 
-    println!("Command line arguments: {:?}", args);
+    let formula = matches.value_of("formula").unwrap().to_string();
+    let truth_table = matches.is_present("truth_table");
+    let valuation = matches.value_of("valuation").unwrap_or("").to_string();
 
-    assert!(args.len() == 3);
+    if truth_table {
+        generate_truth_table(&formula);
+    }
 
-    let expression = &args[1];
-    let valuation = &args[2];
+    if &valuation != "" {
+        let ast = shunting_yard(&formula);
+        let map = generate_valuation(&valuation);
 
-    println!("Expression: {}", expression);
-    println!("Valuation: {}", valuation);
+        let value = evaluate(&ast, &map);
 
-    let ast = shunting_yard(expression);
-    println!("Parsed: {}", ast);
+        print!("Result of evaluation: ");
 
-    generate_truth_table(expression.to_string());
+        match value {
+            true => println!("{}", "T".green()),
+            false => println!("{}", "F".red())
+        };
+    }
 }
 
 #[cfg(test)]
