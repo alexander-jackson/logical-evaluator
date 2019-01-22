@@ -153,12 +153,18 @@ fn generate_truth_table(expression: String) {
 
         for c in &variables {
             match valuation.get(&c) {
-                Some(x) => print!("{}\t", x),
+                Some(x) => match x {
+                    true => print!("T\t"),
+                    false => print!("F\t"),
+                },
                 None => panic!("Variable didn't exist in the HashMap")
             };
         }
 
-        println!("{}", evaluate(&ast, &valuation));
+        match evaluate(&ast, &valuation) {
+            true => println!("T"),
+            false => println!("F")
+        }
     }
 
     println!("");
