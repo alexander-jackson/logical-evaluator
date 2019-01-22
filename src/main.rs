@@ -2,10 +2,14 @@ use std::collections::HashMap;
 
 use colored::*;
 use clap::App;
+use regex::Regex;
 
 fn shunting_yard(expression: &String) -> String {
     let mut output: Vec<char> = Vec::new();
     let mut stack: Vec<char> = Vec::new();
+
+    let re = Regex::new(r"=>").unwrap();
+    let replaced = re.replace_all(expression, ">");
 
     let precedence: HashMap<char, i32> = [
         ('>', 0),
@@ -15,7 +19,7 @@ fn shunting_yard(expression: &String) -> String {
         ('(', 4)
     ].iter().cloned().collect();
 
-    for c in expression.chars() {
+    for c in replaced.chars() {
         if c.is_alphabetic() {
             output.push(c);
         }
