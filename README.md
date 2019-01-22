@@ -38,8 +38,8 @@ OPTIONS:
 ```
 
 A simple test to ensure it build properly is to do
-`cargo run -- --formula 'a&b' --truth_table` to get the truth table for A and
-B.
+`cargo run -- --formula 'a&b' --truth_table` to get the truth table for
+`A ∧ B`.
 
 ## Contributing
 
