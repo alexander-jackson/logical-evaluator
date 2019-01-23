@@ -90,6 +90,14 @@ fn shunting_yard_long_implication_test() {
 }
 
 #[test]
+fn shunting_yard_long_implication_spaces_test() {
+    let input = "p = > q".to_owned();
+    let output = shunting_yard(&input);
+    let expected = "pq>";
+    assert_eq!(output, expected);
+}
+
+#[test]
 fn evaluate_and_operation_test() {
     let input = "pq&".to_owned();
     let mut valuation = HashMap::new();
