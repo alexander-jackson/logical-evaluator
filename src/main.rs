@@ -8,8 +8,11 @@ fn shunting_yard(expression: &String) -> String {
     let mut output: Vec<char> = Vec::new();
     let mut stack: Vec<char> = Vec::new();
 
-    let re = Regex::new(r"=>").unwrap();
-    let replaced = re.replace_all(expression, ">");
+    let space_re = Regex::new(r"[ ]*").unwrap();
+    let implies_re = Regex::new(r"=>").unwrap();
+
+    let no_spaces = space_re.replace_all(expression, "");
+    let finished = implies_re.replace_all(&no_spaces, ">");
 
     let precedence: HashMap<char, i32> = [
         ('>', 0),
@@ -19,7 +22,7 @@ fn shunting_yard(expression: &String) -> String {
         ('(', 4)
     ].iter().cloned().collect();
 
-    for c in replaced.chars() {
+    for c in finished.chars() {
         if c.is_alphabetic() {
             output.push(c);
         }
