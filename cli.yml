@@ -1,5 +1,5 @@
 name: le
-version: "1.0"
+version: "1.1.0"
 author: Alexander Jackson <alexanderjackson@protonmail.com>
 about: Evaluates logical expressions and displays truth tables
 args:
@@ -19,3 +19,7 @@ args:
         value_name: VARIABLES
         help: Sets the variables that are true in the formula
         takes_value: true
+    - sat_solve:
+        long: sat_solve
+        required: false
+        help: Finds the first instance where the formula evaluates to true
