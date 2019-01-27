@@ -1,6 +1,6 @@
 [package]
 name = "le"
-version = "0.1.0"
+version = "1.1.0"
 authors = ["Alexander Jackson <alexanderjackson@protonmail.com>"]
 edition = "2018"
 
