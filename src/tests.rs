@@ -224,3 +224,29 @@ fn shunting_yard_with_brackets_test() {
     let expected = "pqr|&";
     assert_eq!(output, expected);
 }
+
+#[test]
+fn simple_sat_solve_all_true_test() {
+    let input = "p&q".to_owned();
+    let ast = shunting_yard(&input);
+    let output = solve_satisfiability(&input);
+
+    assert!(evaluate(&ast, &output.0));
+}
+
+#[test]
+fn simple_sat_solve_all_false_test() {
+    let input = "!(p|q)".to_owned();
+    let ast = shunting_yard(&input);
+    let output = solve_satisfiability(&input);
+
+    assert!(evaluate(&ast, &output.0));
+}
+
+#[test]
+fn sat_solve_impossible_test() {
+    let input = "!p&p".to_owned();
+    let output = solve_satisfiability(&input);
+
+    assert!(!output.1);
+}
