@@ -82,8 +82,6 @@ fn generate_valuation(set_variables: &String) -> HashMap<char, bool> {
         valuation.insert(c, true);
     }
 
-    valuation.insert('T', true);
-
     return valuation;
 }
 
@@ -182,16 +180,69 @@ fn generate_truth_table(expression: &String) {
     println!("");
 }
 
+fn solve_satisfiability(formula: &String) -> (HashMap<char, bool>, bool) {
+    let mut valuation: HashMap<char, bool> = HashMap::new();
+
+    // Find the variables in the expression
+    let mut variables: Vec<char> = Vec::new();
+    let ast = shunting_yard(&formula);
+
+    for c in ast.chars() {
+        if c.is_alphabetic() && !variables.contains(&c) {
+            variables.push(c);
+        }
+    }
+
+    let iterations = 2 << (variables.len() - 1);
+
+    for bitmask in 0..iterations {
+        // Iterate the variables
+        for i in 0..variables.len() {
+            if bitmask & (1 << i) > 0 {
+                valuation.insert(variables[i], true);
+            } else {
+                valuation.insert(variables[i], false);
+            }
+        }
+
+        match evaluate(&ast, &valuation) {
+            true => return (valuation, true),
+            false => continue
+        }
+    }
+
+    return (valuation, false);
+}
+
 fn main() {
     let yaml = clap::load_yaml!("../cli.yml");
     let matches = App::from_yaml(yaml).get_matches();
 
     let formula = matches.value_of("formula").unwrap().to_string();
     let truth_table = matches.is_present("truth_table");
+    let sat_solve = matches.is_present("sat_solve");
     let valuation = matches.value_of("valuation").unwrap_or("").to_string();
 
     if truth_table {
         generate_truth_table(&formula);
+    }
+
+    if sat_solve {
+        let solution = solve_satisfiability(&formula);
+
+        if solution.1 {
+            println!("\nSAT Solution: ");
+            for (atom, value) in solution.0 {
+                println!("{} - {}", atom,
+                    match value {
+                        true => "T".green(),
+                        false => "F".red()
+                    }
+                );
+            }
+        } else {
+            println!("No solution was found for this equation.");
+        }
     }
 
     if &valuation != "" {
