@@ -220,7 +220,7 @@ fn main() {
 
     let formula = matches.value_of("formula").unwrap().to_string();
     let truth_table = matches.is_present("truth_table");
-    let sat_solve = matches.is_present("sat_solve");
+    let sat_solve = matches.is_present("solve");
     let valuation = matches.value_of("valuation").unwrap_or("").to_string();
 
     if truth_table {

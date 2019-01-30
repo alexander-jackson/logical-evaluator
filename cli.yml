@@ -19,7 +19,7 @@ args:
         value_name: VARIABLES
         help: Sets the variables that are true in the formula
         takes_value: true
-    - sat_solve:
-        long: sat_solve
+    - solve:
+        long: solve
         required: false
         help: Finds the first instance where the formula evaluates to true
