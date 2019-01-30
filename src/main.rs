@@ -214,14 +214,57 @@ fn solve_satisfiability(formula: &String) -> (HashMap<char, bool>, bool) {
     return (valuation, false);
 }
 
+fn check_entailment(f_ast: &String, e_ast: &String) -> bool {
+    let mut f_variables: Vec<char> = Vec::new();
+
+    for c in f_ast.chars() {
+        if c.is_alphabetic() && !f_variables.contains(&c) {
+            f_variables.push(c);
+        }
+    }
+
+    let mut e_variables: Vec<char> = Vec::new();
+
+    for c in e_ast.chars() {
+        if c.is_alphabetic() && !e_variables.contains(&c) {
+            e_variables.push(c);
+        }
+    }
+
+    let iterations = 2 << (f_variables.len() - 1);
+    let mut valuation: HashMap<char, bool> = HashMap::new();
+
+    for bitmask in 0..iterations {
+        // Iterate the variables
+        for i in 0..f_variables.len() {
+            if bitmask & (1 << i) > 0 {
+                valuation.insert(f_variables[i], true);
+            } else {
+                valuation.insert(f_variables[i], false);
+            }
+        }
+
+        let f_value = evaluate(&f_ast, &valuation);
+        let e_value = evaluate(&e_ast, &valuation);
+
+        if f_value && !e_value {
+            return false;
+        }
+    }
+
+    return true;
+}
+
 fn main() {
     let yaml = clap::load_yaml!("../cli.yml");
     let matches = App::from_yaml(yaml).get_matches();
 
     let formula = matches.value_of("formula").unwrap().to_string();
+    let valuation = matches.value_of("valuation").unwrap_or("").to_string();
+    let entailment = matches.value_of("entails").unwrap_or("").to_string();
+
     let truth_table = matches.is_present("truth_table");
     let sat_solve = matches.is_present("solve");
-    let valuation = matches.value_of("valuation").unwrap_or("").to_string();
 
     if truth_table {
         generate_truth_table(&formula);
@@ -257,6 +300,18 @@ fn main() {
             true => println!("{}", "T".green()),
             false => println!("{}", "F".red())
         };
+    }
+
+    if &entailment != "" {
+        let f_ast = shunting_yard(&formula);
+        let e_ast = shunting_yard(&entailment);
+
+        let entails = check_entailment(&f_ast, &e_ast);
+
+        println!("{}", match entails {
+            true => format!("{} entails {}", &formula, &entailment),
+            false => format!("{} does not entail {}", &formula, &entailment),
+        });
     }
 }
 
