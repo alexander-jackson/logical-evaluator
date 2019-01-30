@@ -250,3 +250,21 @@ fn sat_solve_impossible_test() {
 
     assert!(!output.1);
 }
+
+#[test]
+fn simple_entailment_success_test() {
+    let f_input = "pq&".to_owned();
+    let e_input = "pq|".to_owned();
+    let output = check_entailment(&f_input, &e_input);
+
+    assert!(output);
+}
+
+#[test]
+fn simple_entailment_fail_test() {
+    let f_input = "pq&".to_owned();
+    let e_input = "pq|!".to_owned();
+    let output = check_entailment(&f_input, &e_input);
+
+    assert!(!output);
+}
