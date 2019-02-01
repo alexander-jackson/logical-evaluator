@@ -241,6 +241,38 @@ fn check_entailment(f_ast: &String, e_ast: &String) -> bool {
     return true;
 }
 
+fn check_equivalence(f_ast: &String, e_ast: &String) -> bool {
+    let f_variables: Vec<char> = get_variables(&f_ast);
+    let e_variables: Vec<char> = get_variables(&e_ast);
+
+    if f_variables != e_variables {
+        return false;
+    }
+
+    let iterations = 2 << (f_variables.len() - 1);
+    let mut valuation: HashMap<char, bool> = HashMap::new();
+
+    for bitmask in 0..iterations {
+        // Iterate the variables
+        for i in 0..f_variables.len() {
+            if bitmask & (1 << i) > 0 {
+                valuation.insert(f_variables[i], true);
+            } else {
+                valuation.insert(f_variables[i], false);
+            }
+        }
+
+        let f_value = evaluate(&f_ast, &valuation);
+        let e_value = evaluate(&e_ast, &valuation);
+
+        if f_value != e_value {
+            return false;
+        }
+    }
+
+    return true;
+}
+
 fn main() {
     let yaml = clap::load_yaml!("../cli.yml");
     let matches = App::from_yaml(yaml).get_matches();
@@ -248,6 +280,7 @@ fn main() {
     let formula = matches.value_of("formula").unwrap().to_string();
     let valuation = matches.value_of("valuation").unwrap_or("").to_string();
     let entailment = matches.value_of("entails").unwrap_or("").to_string();
+    let equality = matches.value_of("equals").unwrap_or("").to_string();
 
     let truth_table = matches.is_present("truth_table");
     let sat_solve = matches.is_present("solve");
@@ -297,6 +330,18 @@ fn main() {
         println!("{}", match entails {
             true => format!("{} entails {}", &formula, &entailment),
             false => format!("{} does not entail {}", &formula, &entailment),
+        });
+    }
+
+    if &equality != "" {
+        let f_ast = shunting_yard(&formula);
+        let e_ast = shunting_yard(&equality);
+
+        let equal = check_equivalence(&f_ast, &e_ast);
+
+        println!("{}", match equal {
+            true => format!("{} equals {}", &formula, &entailment),
+            false => format!("{} does not equal {}", &formula, &entailment),
         });
     }
 }
