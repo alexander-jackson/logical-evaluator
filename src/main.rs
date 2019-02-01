@@ -61,6 +61,18 @@ fn shunting_yard(expression: &String) -> String {
     return output.into_iter().collect();
 }
 
+fn get_variables(input: &String) -> Vec<char> {
+    let mut variables: Vec<char> = Vec::new();
+
+    for c in input.chars() {
+        if c.is_alphabetic() && !variables.contains(&c) && c != 'T' && c != 'F' {
+            variables.push(c);
+        }
+    }
+
+    return variables;
+}
+
 fn get_value(atom: char, map: &HashMap<char, bool>) -> bool {
     if atom == 'T' {
         return true;
@@ -79,7 +91,9 @@ fn generate_valuation(set_variables: &String) -> HashMap<char, bool> {
     let mut valuation: HashMap<char, bool> = HashMap::new();
 
     for c in set_variables.chars() {
-        valuation.insert(c, true);
+        if c != 'T' && c != 'F' {
+            valuation.insert(c, true);
+        }
     }
 
     return valuation;
@@ -129,15 +143,7 @@ fn evaluate(ast: &String, valuation: &HashMap<char, bool>) -> bool {
 fn generate_truth_table(expression: &String) {
     // Generate the ast
     let ast: String = shunting_yard(&expression);
-
-    // Find the variables in the expression
-    let mut variables: Vec<char> = Vec::new();
-
-    for c in ast.chars() {
-        if c.is_alphabetic() && !variables.contains(&c) {
-            variables.push(c);
-        }
-    }
+    let variables: Vec<char> = get_variables(&ast);
 
     // Generate the initial HashMap
     let mut valuation: HashMap<char, bool> = HashMap::new();
@@ -184,14 +190,8 @@ fn solve_satisfiability(formula: &String) -> (HashMap<char, bool>, bool) {
     let mut valuation: HashMap<char, bool> = HashMap::new();
 
     // Find the variables in the expression
-    let mut variables: Vec<char> = Vec::new();
     let ast = shunting_yard(&formula);
-
-    for c in ast.chars() {
-        if c.is_alphabetic() && !variables.contains(&c) {
-            variables.push(c);
-        }
-    }
+    let variables: Vec<char> = get_variables(&ast);
 
     let iterations = 2 << (variables.len() - 1);
 
@@ -215,21 +215,7 @@ fn solve_satisfiability(formula: &String) -> (HashMap<char, bool>, bool) {
 }
 
 fn check_entailment(f_ast: &String, e_ast: &String) -> bool {
-    let mut f_variables: Vec<char> = Vec::new();
-
-    for c in f_ast.chars() {
-        if c.is_alphabetic() && !f_variables.contains(&c) {
-            f_variables.push(c);
-        }
-    }
-
-    let mut e_variables: Vec<char> = Vec::new();
-
-    for c in e_ast.chars() {
-        if c.is_alphabetic() && !e_variables.contains(&c) {
-            e_variables.push(c);
-        }
-    }
+    let f_variables: Vec<char> = get_variables(&f_ast);
 
     let iterations = 2 << (f_variables.len() - 1);
     let mut valuation: HashMap<char, bool> = HashMap::new();
