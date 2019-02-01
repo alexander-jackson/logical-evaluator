@@ -284,3 +284,21 @@ fn simple_entailment_fail_test() {
 
     assert!(!output);
 }
+
+#[test]
+fn simple_equivalence_success_test() {
+    let f_input = "pq&".to_owned();
+    let e_input = "pq&".to_owned();
+    let output = check_entailment(&f_input, &e_input);
+
+    assert!(output);
+}
+
+#[test]
+fn simple_equivalence_fail_test() {
+    let f_input = "pq&".to_owned();
+    let e_input = "pq|".to_owned();
+    let output = check_entailment(&f_input, &e_input);
+
+    assert!(output);
+}
