@@ -218,6 +218,22 @@ fn evaluate_implication_operation_test() {
 }
 
 #[test]
+fn get_variables_test() {
+    let input = "TF".to_owned();
+    let output = get_variables(&input);
+
+    assert_eq!(output.len(), 0);
+}
+
+#[test]
+fn generate_valuation_test() {
+    let input = "TF".to_owned();
+    let output = generate_valuation(&input);
+
+    assert_eq!(output.len(), 0);
+}
+
+#[test]
 fn shunting_yard_with_brackets_test() {
     let input = "p&(q|r)".to_owned();
     let output = shunting_yard(&input);
