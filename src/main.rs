@@ -340,8 +340,8 @@ fn main() {
         let equal = check_equivalence(&f_ast, &e_ast);
 
         println!("{}", match equal {
-            true => format!("{} equals {}", &formula, &entailment),
-            false => format!("{} does not equal {}", &formula, &entailment),
+            true => format!("{} equals {}", &formula, &equality),
+            false => format!("{} does not equal {}", &formula, &equality),
         });
     }
 }
