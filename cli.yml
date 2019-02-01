@@ -16,6 +16,12 @@ args:
         help: Sets the formula to compare to for entailment
         required: false
         takes_value: true
+    - equals:
+        long: equals
+        value_name: WFF
+        help: Sets the formula to compare to for equality
+        required: false
+        takes_value: true
     - valuation:
         long: valuation
         value_name: VARIABLES
