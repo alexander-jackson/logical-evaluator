@@ -4,15 +4,14 @@ use colored::*;
 use clap::App;
 use regex::Regex;
 
-fn shunting_yard(expression: &String) -> String {
+fn shunting_yard(expression: &str) -> String {
     let mut output: Vec<char> = Vec::new();
     let mut stack: Vec<char> = Vec::new();
 
     let space_re = Regex::new(r"[ ]*").unwrap();
-    let implies_re = Regex::new(r"=>").unwrap();
 
     let no_spaces = space_re.replace_all(expression, "");
-    let finished = implies_re.replace_all(&no_spaces, ">");
+    let finished = no_spaces.replace("=>", ">");
 
     let precedence: HashMap<char, i32> = [
         ('>', 0),
@@ -35,7 +34,7 @@ fn shunting_yard(expression: &String) -> String {
             while top != '(' {
                 output.push(top);
 
-                if stack.len() == 0 {
+                if stack.is_empty() {
                     break;
                 }
 
@@ -46,7 +45,7 @@ fn shunting_yard(expression: &String) -> String {
             continue;
         }
         else {
-            while stack.len() > 0 && precedence[&stack[stack.len() - 1]] > precedence[&c] && stack[stack.len() - 1] != '(' {
+            while !stack.is_empty() && precedence[&stack[stack.len() - 1]] > precedence[&c] && stack[stack.len() - 1] != '(' {
                 output.push(stack.pop().unwrap());
             }
 
@@ -54,14 +53,14 @@ fn shunting_yard(expression: &String) -> String {
         }
     }
 
-    while stack.len() > 0 {
+    while !stack.is_empty() {
         output.push(stack.pop().unwrap());
     }
 
-    return output.into_iter().collect();
+    output.into_iter().collect()
 }
 
-fn get_variables(input: &String) -> Vec<char> {
+fn get_variables(input: &str) -> Vec<char> {
     let mut variables: Vec<char> = Vec::new();
 
     for c in input.chars() {
@@ -70,7 +69,7 @@ fn get_variables(input: &String) -> Vec<char> {
         }
     }
 
-    return variables;
+    variables
 }
 
 fn get_value(atom: char, map: &HashMap<char, bool>) -> bool {
@@ -81,13 +80,13 @@ fn get_value(atom: char, map: &HashMap<char, bool>) -> bool {
         return false;
     }
 
-    return match map.get(&atom) {
+    match map.get(&atom) {
         Some(_v) => *_v,
         None => false
-    };
+    }
 }
 
-fn generate_valuation(set_variables: &String) -> HashMap<char, bool> {
+fn generate_valuation(set_variables: &str) -> HashMap<char, bool> {
     let mut valuation: HashMap<char, bool> = HashMap::new();
 
     for c in set_variables.chars() {
@@ -96,51 +95,52 @@ fn generate_valuation(set_variables: &String) -> HashMap<char, bool> {
         }
     }
 
-    return valuation;
+    valuation
 }
 
-fn evaluate_operator(op: &char, stack: &mut Vec<char>, valuation: &HashMap<char, bool>) -> bool {
+fn evaluate_operator(op: char, stack: &mut Vec<char>, valuation: &HashMap<char, bool>) -> bool {
     let first: bool = get_value(stack.pop().unwrap(), &valuation);
 
-    let second: bool = match *op {
+    let second: bool = match op {
         '!' => false,
         _ => get_value(stack.pop().unwrap(), &valuation)
     };
 
-    return match op {
+    match op {
         '!' => !first,
         '&' => first & second,
         '|' => first | second,
         '>' => first | !second,
         _ => panic!("Unexpected operation: {}", op)
-    };
+    }
 }
 
-fn evaluate(ast: &String, valuation: &HashMap<char, bool>) -> bool {
+fn evaluate(ast: &str, valuation: &HashMap<char, bool>) -> bool {
     let mut stack: Vec<char> = Vec::new();
 
     for c in ast.chars() {
         if c.is_alphabetic() {
             stack.push(c);
         } else {
-            let val: bool = evaluate_operator(&c, &mut stack, &valuation);
+            let val: bool = evaluate_operator(c, &mut stack, &valuation);
 
             stack.push(
-                match val {
-                    true => 'T',
-                    false => 'F'
+                if val {
+                    'T'
+                } else {
+                    'F'
                 }
             );
         }
     }
 
-    return match stack.pop().unwrap() {
+    match stack.pop().unwrap() {
         'T' => true,
         _ => false
     }
 }
 
-fn generate_truth_table(expression: &String) {
+fn generate_truth_table(expression: &str) {
     // Generate the ast
     let ast: String = shunting_yard(&expression);
     let variables: Vec<char> = get_variables(&ast);
@@ -159,12 +159,8 @@ fn generate_truth_table(expression: &String) {
 
     for bitmask in 0..iterations {
         // Iterate the variables
-        for i in 0..variables.len() {
-            if bitmask & (1 << i) > 0 {
-                valuation.insert(variables[i], true);
-            } else {
-                valuation.insert(variables[i], false);
-            }
+        for (i, var) in variables.iter().enumerate() {
+            valuation.insert(*var, bitmask & (1 << i) > 0);
         }
 
         for c in &variables {
@@ -177,16 +173,17 @@ fn generate_truth_table(expression: &String) {
             };
         }
 
-        match evaluate(&ast, &valuation) {
-            true => println!("{}", "T".green()),
-            false => println!("{}", "F".red())
+        if evaluate(&ast, &valuation) {
+            println!("{}", "T".green())
+        } else {
+            println!("{}", "F".red())
         }
     }
 
-    println!("");
+    println!();
 }
 
-fn solve_satisfiability(formula: &String) -> (HashMap<char, bool>, bool) {
+fn solve_satisfiability(formula: &str) -> (HashMap<char, bool>, bool) {
     let mut valuation: HashMap<char, bool> = HashMap::new();
 
     // Find the variables in the expression
@@ -197,24 +194,21 @@ fn solve_satisfiability(formula: &String) -> (HashMap<char, bool>, bool) {
 
     for bitmask in 0..iterations {
         // Iterate the variables
-        for i in 0..variables.len() {
-            if bitmask & (1 << i) > 0 {
-                valuation.insert(variables[i], true);
-            } else {
-                valuation.insert(variables[i], false);
-            }
+        for (i, var) in variables.iter().enumerate() {
+            valuation.insert(*var, bitmask & (1 << i) > 0);
         }
 
-        match evaluate(&ast, &valuation) {
-            true => return (valuation, true),
-            false => continue
+        if evaluate(&ast, &valuation) {
+            return (valuation, true)
+        } else {
+            continue
         }
     }
 
-    return (valuation, false);
+    (valuation, false)
 }
 
-fn check_entailment(f_ast: &String, e_ast: &String) -> bool {
+fn check_entailment(f_ast: &str, e_ast: &str) -> bool {
     let f_variables: Vec<char> = get_variables(&f_ast);
 
     let iterations = 2 << (f_variables.len() - 1);
@@ -222,12 +216,8 @@ fn check_entailment(f_ast: &String, e_ast: &String) -> bool {
 
     for bitmask in 0..iterations {
         // Iterate the variables
-        for i in 0..f_variables.len() {
-            if bitmask & (1 << i) > 0 {
-                valuation.insert(f_variables[i], true);
-            } else {
-                valuation.insert(f_variables[i], false);
-            }
+        for (i, var) in f_variables.iter().enumerate() {
+            valuation.insert(*var, bitmask & (1 << i) > 0);
         }
 
         let f_value = evaluate(&f_ast, &valuation);
@@ -238,10 +228,10 @@ fn check_entailment(f_ast: &String, e_ast: &String) -> bool {
         }
     }
 
-    return true;
+    true
 }
 
-fn check_equivalence(f_ast: &String, e_ast: &String) -> bool {
+fn check_equivalence(f_ast: &str, e_ast: &str) -> bool {
     let f_variables: Vec<char> = get_variables(&f_ast);
     let e_variables: Vec<char> = get_variables(&e_ast);
 
@@ -254,12 +244,8 @@ fn check_equivalence(f_ast: &String, e_ast: &String) -> bool {
 
     for bitmask in 0..iterations {
         // Iterate the variables
-        for i in 0..f_variables.len() {
-            if bitmask & (1 << i) > 0 {
-                valuation.insert(f_variables[i], true);
-            } else {
-                valuation.insert(f_variables[i], false);
-            }
+        for (i, var) in f_variables.iter().enumerate() {
+            valuation.insert(*var, bitmask & (1 << i) > 0);
         }
 
         let f_value = evaluate(&f_ast, &valuation);
@@ -270,7 +256,7 @@ fn check_equivalence(f_ast: &String, e_ast: &String) -> bool {
         }
     }
 
-    return true;
+    true
 }
 
 fn main() {
@@ -296,9 +282,10 @@ fn main() {
             println!("\nSAT Solution: ");
             for (atom, value) in solution.0 {
                 println!("{} - {}", atom,
-                    match value {
-                        true => "T".green(),
-                        false => "F".red()
+                    if value {
+                        "T".green()
+                    } else {
+                        "F".red()
                     }
                 );
             }
@@ -315,10 +302,11 @@ fn main() {
 
         print!("Result of evaluation: ");
 
-        match value {
-            true => println!("{}", "T".green()),
-            false => println!("{}", "F".red())
-        };
+        if value {
+            println!("{}", "T".green());
+        } else {
+            println!("{}", "F".red());
+        }
     }
 
     if &entailment != "" {
@@ -327,10 +315,13 @@ fn main() {
 
         let entails = check_entailment(&f_ast, &e_ast);
 
-        println!("{}", match entails {
-            true => format!("{} entails {}", &formula, &entailment),
-            false => format!("{} does not entail {}", &formula, &entailment),
-        });
+        println!("{}",
+            if entails {
+                format!("{} entails {}", &formula, &entailment)
+            } else {
+                format!("{} does not entail {}", &formula, &entailment)
+            }
+        );
     }
 
     if &equality != "" {
@@ -339,10 +330,13 @@ fn main() {
 
         let equal = check_equivalence(&f_ast, &e_ast);
 
-        println!("{}", match equal {
-            true => format!("{} equals {}", &formula, &equality),
-            false => format!("{} does not equal {}", &formula, &equality),
-        });
+        println!("{}",
+            if equal {
+                format!("{} equals {}", &formula, &equality)
+            } else {
+                format!("{} does not equal {}", &formula, &equality)
+            }
+        );
     }
 }
 
