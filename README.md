@@ -1,17 +1,17 @@
 # Logical Evaluator
 
-Logical Evaluator (LE) is a Rust tool for evaluating logical expressions in
+Logical Evaluator (le) is a Rust tool for evaluating logical expressions in
 different ways.
 
 ## Installation
 
 You can install LE by cloning the Git repository, and then using Rust's package
-manager Cargo to build the executable.
+manager Cargo to build and install the executable.
 
 ```
 git clone https://github.com/alexander-jackson/logical-evaluator.git
 cd logical-evaluator/
-cargo build
+cargo install --path .
 ```
 
 ## Usage
@@ -20,7 +20,7 @@ While in the `logical-evaluator` repository, you can type the following to get
 documentation.
 
 ```
-cargo run -- -h
+le -h
 
 Evaluates logical expressions and displays truth tables
 
@@ -29,17 +29,20 @@ USAGE:
 
 FLAGS:
     -h, --help           Prints help information
+        --solve          Finds the first instance where the formula evaluates to true
         --truth_table    Informs the program to display a truth table for the WFF
     -V, --version        Prints version information
 
 OPTIONS:
+        --entails <WFF>            Sets the formula to compare to for entailment
+        --equals <WFF>             Sets the formula to compare to for equality
     -f, --formula <WFF>            Sets the formula to act on
         --valuation <VARIABLES>    Sets the variables that are true in the formula
 ```
 
-A simple test to ensure the program built properly is to do
-`cargo run -- --formula 'a&b' --truth_table` to get the truth table for
-`A ∧ B`.
+## Tests
+
+Tests can be run using the `cargo test` command to ensure all tests work on your system.
 
 ## Contributing
 
