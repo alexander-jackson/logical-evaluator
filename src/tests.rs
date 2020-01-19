@@ -175,7 +175,7 @@ fn simple_sat_solve_all_true_test() {
     let ast = shunting_yard(&input);
     let output = solve_satisfiability(&input);
 
-    assert!(evaluate(&ast, &output.0));
+    assert!(evaluate(&ast, &output.unwrap()));
 }
 
 #[test]
@@ -184,7 +184,7 @@ fn simple_sat_solve_all_false_test() {
     let ast = shunting_yard(&input);
     let output = solve_satisfiability(&input);
 
-    assert!(evaluate(&ast, &output.0));
+    assert!(evaluate(&ast, &output.unwrap()));
 }
 
 #[test]
@@ -192,7 +192,7 @@ fn sat_solve_impossible_test() {
     let input = "!p&p".to_owned();
     let output = solve_satisfiability(&input);
 
-    assert!(!output.1);
+    assert!(output.is_none());
 }
 
 #[test]

@@ -183,7 +183,7 @@ fn generate_truth_table(expression: &str) {
     println!();
 }
 
-fn solve_satisfiability(formula: &str) -> (HashMap<char, bool>, bool) {
+fn solve_satisfiability(formula: &str) -> Option<HashMap<char, bool>> {
     let mut valuation: HashMap<char, bool> = HashMap::new();
 
     // Find the variables in the expression
@@ -199,13 +199,11 @@ fn solve_satisfiability(formula: &str) -> (HashMap<char, bool>, bool) {
         }
 
         if evaluate(&ast, &valuation) {
-            return (valuation, true)
-        } else {
-            continue
+            return Some(valuation);
         }
     }
 
-    (valuation, false)
+    None
 }
 
 fn check_entailment(f_ast: &str, e_ast: &str) -> bool {
@@ -276,11 +274,9 @@ fn main() {
     }
 
     if sat_solve {
-        let solution = solve_satisfiability(&formula);
-
-        if solution.1 {
+        if let Some(solution) = solve_satisfiability(&formula) {
             println!("\nSAT Solution: ");
-            for (atom, value) in solution.0 {
+            for (atom, value) in solution {
                 println!("{} - {}", atom,
                     if value {
                         "T".green()
