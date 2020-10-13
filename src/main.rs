@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
-use colored::*;
 use clap::App;
+use colored::*;
 use regex::Regex;
 
 fn shunting_yard(expression: &str) -> String {
@@ -13,22 +13,17 @@ fn shunting_yard(expression: &str) -> String {
     let no_spaces = space_re.replace_all(expression, "");
     let finished = no_spaces.replace("=>", ">");
 
-    let precedence: HashMap<char, i32> = [
-        ('>', 0),
-        ('|', 1),
-        ('&', 2),
-        ('!', 3),
-        ('(', 4)
-    ].iter().cloned().collect();
+    let precedence: HashMap<char, i32> = [('>', 0), ('|', 1), ('&', 2), ('!', 3), ('(', 4)]
+        .iter()
+        .cloned()
+        .collect();
 
     for c in finished.chars() {
         if c.is_alphabetic() {
             output.push(c);
-        }
-        else if c == '(' {
+        } else if c == '(' {
             stack.push(c);
-        }
-        else if c == ')' {
+        } else if c == ')' {
             let mut top = stack.pop().unwrap();
 
             while top != '(' {
@@ -40,12 +35,13 @@ fn shunting_yard(expression: &str) -> String {
 
                 top = stack.pop().unwrap();
             }
-        }
-        else if c == ' ' {
+        } else if c == ' ' {
             continue;
-        }
-        else {
-            while !stack.is_empty() && precedence[&stack[stack.len() - 1]] > precedence[&c] && stack[stack.len() - 1] != '(' {
+        } else {
+            while !stack.is_empty()
+                && precedence[&stack[stack.len() - 1]] > precedence[&c]
+                && stack[stack.len() - 1] != '('
+            {
                 output.push(stack.pop().unwrap());
             }
 
@@ -75,14 +71,13 @@ fn get_variables(input: &str) -> Vec<char> {
 fn get_value(atom: char, map: &HashMap<char, bool>) -> bool {
     if atom == 'T' {
         return true;
-    }
-    else if atom == 'F' {
+    } else if atom == 'F' {
         return false;
     }
 
     match map.get(&atom) {
         Some(_v) => *_v,
-        None => false
+        None => false,
     }
 }
 
@@ -103,7 +98,7 @@ fn evaluate_operator(op: char, stack: &mut Vec<char>, valuation: &HashMap<char, 
 
     let second: bool = match op {
         '!' => false,
-        _ => get_value(stack.pop().unwrap(), &valuation)
+        _ => get_value(stack.pop().unwrap(), &valuation),
     };
 
     match op {
@@ -111,7 +106,7 @@ fn evaluate_operator(op: char, stack: &mut Vec<char>, valuation: &HashMap<char, 
         '&' => first & second,
         '|' => first | second,
         '>' => first | !second,
-        _ => panic!("Unexpected operation: {}", op)
+        _ => panic!("Unexpected operation: {}", op),
     }
 }
 
@@ -124,19 +119,13 @@ fn evaluate(ast: &str, valuation: &HashMap<char, bool>) -> bool {
         } else {
             let val: bool = evaluate_operator(c, &mut stack, &valuation);
 
-            stack.push(
-                if val {
-                    'T'
-                } else {
-                    'F'
-                }
-            );
+            stack.push(if val { 'T' } else { 'F' });
         }
     }
 
     match stack.pop().unwrap() {
         'T' => true,
-        _ => false
+        _ => false,
     }
 }
 
@@ -169,7 +158,7 @@ fn generate_truth_table(expression: &str) {
                     true => print!("{}", "T\t".green()),
                     false => print!("{}", "F\t".red()),
                 },
-                None => panic!("Variable didn't exist in the HashMap")
+                None => panic!("Variable didn't exist in the HashMap"),
             };
         }
 
@@ -277,13 +266,7 @@ fn main() {
         if let Some(solution) = solve_satisfiability(&formula) {
             println!("\nSAT Solution: ");
             for (atom, value) in solution {
-                println!("{} - {}", atom,
-                    if value {
-                        "T".green()
-                    } else {
-                        "F".red()
-                    }
-                );
+                println!("{} - {}", atom, if value { "T".green() } else { "F".red() });
             }
         } else {
             println!("No solution was found for this equation.");
@@ -311,7 +294,8 @@ fn main() {
 
         let entails = check_entailment(&f_ast, &e_ast);
 
-        println!("{}",
+        println!(
+            "{}",
             if entails {
                 format!("{} entails {}", &formula, &entailment)
             } else {
@@ -326,7 +310,8 @@ fn main() {
 
         let equal = check_equivalence(&f_ast, &e_ast);
 
-        println!("{}",
+        println!(
+            "{}",
             if equal {
                 format!("{} equals {}", &formula, &equality)
             } else {
