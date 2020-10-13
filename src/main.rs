@@ -1,6 +1,5 @@
 use std::collections::HashMap;
 
-use clap::App;
 use colored::*;
 use regex::Regex;
 
@@ -241,23 +240,39 @@ fn check_equivalence(f_ast: &str, e_ast: &str) -> bool {
     true
 }
 
+struct Args {
+    formula: Option<String>,
+    valuation: Option<String>,
+    entailment: Option<String>,
+    equality: Option<String>,
+    truth_table: bool,
+    sat_solve: bool,
+}
+
+fn parse_args() -> Result<Args, pico_args::Error> {
+    let mut args = pico_args::Arguments::from_env();
+
+    let args = Args {
+        formula: args.opt_value_from_str("--formula")?,
+        valuation: args.opt_value_from_str("--valuation")?,
+        entailment: args.opt_value_from_str("--entailment")?,
+        equality: args.opt_value_from_str("--equality")?,
+        truth_table: args.contains("--truth-table"),
+        sat_solve: args.contains("--solve"),
+    };
+
+    Ok(args)
+}
+
 fn main() {
-    let yaml = clap::load_yaml!("../cli.yml");
-    let matches = App::from_yaml(yaml).get_matches();
+    let args = parse_args().expect("Failed to parse arguments");
+    let formula = args.formula.expect("Argument required for --formula");
 
-    let formula = matches.value_of("formula").unwrap().to_string();
-    let valuation = matches.value_of("valuation").unwrap_or("").to_string();
-    let entailment = matches.value_of("entails").unwrap_or("").to_string();
-    let equality = matches.value_of("equals").unwrap_or("").to_string();
-
-    let truth_table = matches.is_present("truth_table");
-    let sat_solve = matches.is_present("solve");
-
-    if truth_table {
+    if args.truth_table {
         generate_truth_table(&formula);
     }
 
-    if sat_solve {
+    if args.sat_solve {
         if let Some(solution) = solve_satisfiability(&formula) {
             println!("\nSAT Solution: ");
             for (atom, value) in solution {
@@ -268,7 +283,7 @@ fn main() {
         }
     }
 
-    if &valuation != "" {
+    if let Some(valuation) = args.valuation {
         let ast = shunting_yard(&formula);
         let map = generate_valuation(&valuation);
 
@@ -283,7 +298,7 @@ fn main() {
         }
     }
 
-    if &entailment != "" {
+    if let Some(entailment) = args.entailment {
         let f_ast = shunting_yard(&formula);
         let e_ast = shunting_yard(&entailment);
 
@@ -299,7 +314,7 @@ fn main() {
         );
     }
 
-    if &equality != "" {
+    if let Some(equality) = args.equality {
         let f_ast = shunting_yard(&formula);
         let e_ast = shunting_yard(&equality);
 
