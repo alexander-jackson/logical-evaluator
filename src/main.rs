@@ -69,15 +69,10 @@ fn get_variables(input: &str) -> Vec<char> {
 }
 
 fn get_value(atom: char, map: &HashMap<char, bool>) -> bool {
-    if atom == 'T' {
-        return true;
-    } else if atom == 'F' {
-        return false;
-    }
-
-    match map.get(&atom) {
-        Some(_v) => *_v,
-        None => false,
+    match atom {
+        'T' => true,
+        'F' => false,
+        c => map.get(&c).copied().unwrap_or(false),
     }
 }
 
