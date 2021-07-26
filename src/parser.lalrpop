@@ -12,7 +12,7 @@ AndExpr: ast::Expression = {
 	<left: AndExpr> "&" <right: OrExpr> =>
 		ast::Expression::Binary {
 			left: Box::new(left),
-			op: '&',
+			op: ast::BinaryOperator::And,
 			right: Box::new(right),
 		},
 };
@@ -22,7 +22,7 @@ OrExpr: ast::Expression = {
 	<left: OrExpr> "|" <right: ImplicationExpr> =>
 		ast::Expression::Binary {
 			left: Box::new(left),
-			op: '|',
+			op: ast::BinaryOperator::Or,
 			right: Box::new(right),
 		},
 };
@@ -32,7 +32,7 @@ ImplicationExpr: ast::Expression = {
 	<left: ImplicationExpr> "=>" <right: NotExpr> =>
 		ast::Expression::Binary {
 			left: Box::new(left),
-			op: '|',
+			op: ast::BinaryOperator::Implies,
 			right: Box::new(right),
 		},
 };
@@ -40,7 +40,7 @@ ImplicationExpr: ast::Expression = {
 NotExpr: ast::Expression = {
 	Terminal,
 	"!" <expr: NotExpr> => ast::Expression::Unary {
-		op: '!',
+		op: ast::UnaryOperator::Not,
 		expr: Box::new(expr)
 	}
 };

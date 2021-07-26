@@ -1,14 +1,44 @@
 use std::collections::HashMap;
 
+#[derive(Copy, Clone, Debug)]
+pub enum BinaryOperator {
+    And,
+    Or,
+    Implies,
+}
+
+impl BinaryOperator {
+    fn evaluate(&self, left: bool, right: bool) -> bool {
+        match *self {
+            Self::And => left & right,
+            Self::Or => left | right,
+            Self::Implies => !left | right,
+        }
+    }
+}
+
+#[derive(Copy, Clone, Debug)]
+pub enum UnaryOperator {
+    Not,
+}
+
+impl UnaryOperator {
+    fn evaluate(&self, value: bool) -> bool {
+        match *self {
+            Self::Not => !value,
+        }
+    }
+}
+
 #[derive(Debug)]
 pub enum Expression {
     Binary {
         left: Box<Expression>,
-        op: char,
+        op: BinaryOperator,
         right: Box<Expression>,
     },
     Unary {
-        op: char,
+        op: UnaryOperator,
         expr: Box<Expression>,
     },
     Enclosed {
@@ -26,8 +56,8 @@ impl Expression {
         use self::Expression::*;
 
         match self {
-            Binary { left, op, right } => evaluate_binary_expr(valuations, left, op, right),
-            Unary { op, expr } => evaluate_unary_expr(valuations, op, expr),
+            Binary { left, op, right } => evaluate_binary_expr(valuations, left, *op, right),
+            Unary { op, expr } => evaluate_unary_expr(valuations, *op, expr),
             Identifier { value } => evaluate_identifier(valuations, value),
             Enclosed { inner } => inner.evaluate(valuations),
             True => true,
@@ -58,30 +88,23 @@ impl Expression {
 fn evaluate_binary_expr(
     valuations: &HashMap<&str, bool>,
     left: &Box<Expression>,
-    op: &char,
+    op: BinaryOperator,
     right: &Box<Expression>,
 ) -> bool {
     let lhs = left.evaluate(valuations);
     let rhs = right.evaluate(valuations);
 
-    match op {
-        '&' => lhs & rhs,
-        '|' => lhs | rhs,
-        _ => unreachable!(),
-    }
+    op.evaluate(lhs, rhs)
 }
 
 fn evaluate_unary_expr(
     valuations: &HashMap<&str, bool>,
-    op: &char,
+    op: UnaryOperator,
     expr: &Box<Expression>,
 ) -> bool {
     let value = expr.evaluate(valuations);
 
-    match op {
-        '!' => !value,
-        _ => unreachable!(),
-    }
+    op.evaluate(value)
 }
 
 fn evaluate_identifier(valuations: &HashMap<&str, bool>, ident: &str) -> bool {
