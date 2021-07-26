@@ -1,0 +1,82 @@
+use crate::ast;
+use crate::lexer;
+
+grammar;
+
+pub Expr: ast::Expression = {
+	AndExpr,
+};
+
+AndExpr: ast::Expression = {
+	OrExpr,
+	<left: AndExpr> "&" <right: OrExpr> =>
+		ast::Expression::Binary {
+			left: Box::new(left),
+			op: '&',
+			right: Box::new(right),
+		},
+};
+
+OrExpr: ast::Expression = {
+	ImplicationExpr,
+	<left: OrExpr> "|" <right: ImplicationExpr> =>
+		ast::Expression::Binary {
+			left: Box::new(left),
+			op: '|',
+			right: Box::new(right),
+		},
+};
+
+ImplicationExpr: ast::Expression = {
+	NotExpr,
+	<left: ImplicationExpr> "=>" <right: NotExpr> =>
+		ast::Expression::Binary {
+			left: Box::new(left),
+			op: '|',
+			right: Box::new(right),
+		},
+};
+
+NotExpr: ast::Expression = {
+	Terminal,
+	"!" <expr: NotExpr> => ast::Expression::Unary {
+		op: '!',
+		expr: Box::new(expr)
+	}
+};
+
+Terminal: ast::Expression = {
+	Identifier,
+	Boolean,
+	Enclosure,
+};
+
+Identifier: ast::Expression = {
+	<value: "identifier"> => ast::Expression::Identifier { value }
+};
+
+Boolean: ast::Expression = {
+	True => ast::Expression::True,
+	False => ast::Expression::False,
+};
+
+Enclosure: ast::Expression = {
+	"(" <inner: Expr> ")" => ast::Expression::Enclosed { inner: Box::new(inner) },
+};
+
+extern {
+	type Location = usize;
+	type Error = lexer::LexicalError;
+
+	enum lexer::Token {
+		"identifier" => lexer::Token::Identifier(<String>),
+		"&" => lexer::Token::And,
+		"|" => lexer::Token::Or,
+		"!" => lexer::Token::Not,
+		"=>" => lexer::Token::Implies,
+		"(" => lexer::Token::LeftParen,
+		")" => lexer::Token::RightParen,
+		True => lexer::Token::True,
+		False => lexer::Token::False,
+	}
+}

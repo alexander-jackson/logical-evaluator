@@ -1,30 +1,31 @@
 use super::*;
 
-macro_rules! shunting_yard {
-    ($($name:ident: $input:expr, $expected:expr,)*) => {
+macro_rules! parser_success {
+    ($($name:ident: $input:expr,)*) => {
         $(
             #[test]
             fn $name() {
                 let input: &str = $input;
-                let output: &str = &shunting_yard(input);
-                let expected: &str = $expected;
-                assert_eq!(output, expected);
+                let lexer = lexer::Lexer::new(input);
+                let parser = parser::ExprParser::new();
+                let ast = parser.parse(lexer);
+                assert!(ast.is_ok());
             }
         )*
     }
 }
 
-shunting_yard! {
-    logical_and: "p&q", "pq&",
-    logical_or: "p|q", "pq|",
-    logical_not: "!p", "p!",
-    implication: "p>q", "pq>",
-    and_then_or: "p&q|r", "pq&r|",
-    or_then_and: "p|q&r", "pqr&|",
-    ignore_spaces: "p & q", "pq&",
-    long_implication: "p = > q", "pq>",
+parser_success! {
+    logical_and: "p&q",
+    logical_or: "p|q",
+    logical_not: "!p",
+    implication: "p=>q",
+    and_then_or: "p&q|r",
+    or_then_and: "p|q&r",
+    ignore_spaces: "p & q",
 }
 
+/*
 #[test]
 fn evaluate_and_operation_test() {
     let input = "pq&".to_owned();
@@ -230,3 +231,4 @@ fn simple_equivalence_fail_test() {
 
     assert!(output);
 }
+*/

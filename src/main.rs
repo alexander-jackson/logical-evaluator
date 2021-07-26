@@ -1,135 +1,25 @@
+#[macro_use]
+extern crate lalrpop_util;
+
 use std::collections::HashMap;
 
 use colored::*;
-use regex::Regex;
 
-fn shunting_yard(expression: &str) -> String {
-    let mut output: Vec<char> = Vec::new();
-    let mut stack: Vec<char> = Vec::new();
+lalrpop_mod!(pub parser);
 
-    let space_re = Regex::new(r"[ ]*").unwrap();
+pub mod ast;
+pub mod lexer;
 
-    let no_spaces = space_re.replace_all(expression, "");
-    let finished = no_spaces.replace("=>", ">");
-
-    let precedence: HashMap<char, i32> = [('>', 0), ('|', 1), ('&', 2), ('!', 3), ('(', 4)]
-        .iter()
-        .cloned()
-        .collect();
-
-    for c in finished.chars() {
-        if c.is_alphabetic() {
-            output.push(c);
-        } else if c == '(' {
-            stack.push(c);
-        } else if c == ')' {
-            let mut top = stack.pop().unwrap();
-
-            while top != '(' {
-                output.push(top);
-
-                if stack.is_empty() {
-                    break;
-                }
-
-                top = stack.pop().unwrap();
-            }
-        } else if c == ' ' {
-            continue;
-        } else {
-            while !stack.is_empty()
-                && precedence[&stack[stack.len() - 1]] > precedence[&c]
-                && stack[stack.len() - 1] != '('
-            {
-                output.push(stack.pop().unwrap());
-            }
-
-            stack.push(c);
-        }
-    }
-
-    while !stack.is_empty() {
-        output.push(stack.pop().unwrap());
-    }
-
-    output.into_iter().collect()
+fn generate_valuation(set_variables: &str) -> HashMap<&str, bool> {
+    set_variables.split(' ').map(|var| (var, true)).collect()
 }
 
-fn get_variables(input: &str) -> Vec<char> {
-    let mut variables: Vec<char> = Vec::new();
-
-    for c in input.chars() {
-        if c.is_alphabetic() && !variables.contains(&c) && c != 'T' && c != 'F' {
-            variables.push(c);
-        }
-    }
-
-    variables
-}
-
-fn get_value(atom: char, map: &HashMap<char, bool>) -> bool {
-    match atom {
-        'T' => true,
-        'F' => false,
-        c => map.get(&c).copied().unwrap_or(false),
-    }
-}
-
-fn generate_valuation(set_variables: &str) -> HashMap<char, bool> {
-    let mut valuation: HashMap<char, bool> = HashMap::new();
-
-    for c in set_variables.chars() {
-        if c != 'T' && c != 'F' {
-            valuation.insert(c, true);
-        }
-    }
-
-    valuation
-}
-
-fn evaluate_operator(op: char, stack: &mut Vec<char>, valuation: &HashMap<char, bool>) -> bool {
-    let first: bool = get_value(stack.pop().unwrap(), &valuation);
-
-    let second: bool = match op {
-        '!' => false,
-        _ => get_value(stack.pop().unwrap(), &valuation),
-    };
-
-    match op {
-        '!' => !first,
-        '&' => first & second,
-        '|' => first | second,
-        '>' => first | !second,
-        _ => panic!("Unexpected operation: {}", op),
-    }
-}
-
-fn evaluate(ast: &str, valuation: &HashMap<char, bool>) -> bool {
-    let mut stack: Vec<char> = Vec::new();
-
-    for c in ast.chars() {
-        if c.is_alphabetic() {
-            stack.push(c);
-        } else {
-            let val: bool = evaluate_operator(c, &mut stack, &valuation);
-
-            stack.push(if val { 'T' } else { 'F' });
-        }
-    }
-
-    match stack.pop().unwrap() {
-        'T' => true,
-        _ => false,
-    }
-}
-
-fn generate_truth_table(expression: &str) {
+fn generate_truth_table(expression: &ast::Expression) {
     // Generate the ast
-    let ast: String = shunting_yard(&expression);
-    let variables: Vec<char> = get_variables(&ast);
+    let variables = expression.get_variables();
 
     // Generate the initial HashMap
-    let mut valuation: HashMap<char, bool> = HashMap::new();
+    let mut valuation = HashMap::new();
     let iterations = 2 << (variables.len() - 1);
 
     for c in &variables {
@@ -147,7 +37,7 @@ fn generate_truth_table(expression: &str) {
         }
 
         for c in &variables {
-            match valuation.get(&c) {
+            match valuation.get(c) {
                 Some(x) => match x {
                     true => print!("{}", "T\t".green()),
                     false => print!("{}", "F\t".red()),
@@ -156,7 +46,7 @@ fn generate_truth_table(expression: &str) {
             };
         }
 
-        if evaluate(&ast, &valuation) {
+        if expression.evaluate(&valuation) {
             println!("{}", "T".green())
         } else {
             println!("{}", "F".red())
@@ -166,13 +56,11 @@ fn generate_truth_table(expression: &str) {
     println!();
 }
 
-fn solve_satisfiability(formula: &str) -> Option<HashMap<char, bool>> {
-    let mut valuation: HashMap<char, bool> = HashMap::new();
+fn solve_satisfiability(expression: &ast::Expression) -> Option<HashMap<&str, bool>> {
+    let mut valuation: HashMap<&str, bool> = HashMap::new();
 
     // Find the variables in the expression
-    let ast = shunting_yard(&formula);
-    let variables: Vec<char> = get_variables(&ast);
-
+    let variables = expression.get_variables();
     let iterations = 2 << (variables.len() - 1);
 
     for bitmask in 0..iterations {
@@ -181,7 +69,7 @@ fn solve_satisfiability(formula: &str) -> Option<HashMap<char, bool>> {
             valuation.insert(*var, bitmask & (1 << i) > 0);
         }
 
-        if evaluate(&ast, &valuation) {
+        if expression.evaluate(&valuation) {
             return Some(valuation);
         }
     }
@@ -189,11 +77,11 @@ fn solve_satisfiability(formula: &str) -> Option<HashMap<char, bool>> {
     None
 }
 
-fn check_entailment(f_ast: &str, e_ast: &str) -> bool {
-    let f_variables: Vec<char> = get_variables(&f_ast);
+fn check_entailment(f_ast: &ast::Expression, e_ast: &ast::Expression) -> bool {
+    let f_variables: Vec<&str> = f_ast.get_variables();
 
     let iterations = 2 << (f_variables.len() - 1);
-    let mut valuation: HashMap<char, bool> = HashMap::new();
+    let mut valuation = HashMap::new();
 
     for bitmask in 0..iterations {
         // Iterate the variables
@@ -201,8 +89,8 @@ fn check_entailment(f_ast: &str, e_ast: &str) -> bool {
             valuation.insert(*var, bitmask & (1 << i) > 0);
         }
 
-        let f_value = evaluate(&f_ast, &valuation);
-        let e_value = evaluate(&e_ast, &valuation);
+        let f_value = f_ast.evaluate(&valuation);
+        let e_value = e_ast.evaluate(&valuation);
 
         if f_value && !e_value {
             return false;
@@ -212,16 +100,16 @@ fn check_entailment(f_ast: &str, e_ast: &str) -> bool {
     true
 }
 
-fn check_equivalence(f_ast: &str, e_ast: &str) -> bool {
-    let f_variables: Vec<char> = get_variables(&f_ast);
-    let e_variables: Vec<char> = get_variables(&e_ast);
+fn check_equivalence(f_ast: &ast::Expression, e_ast: &ast::Expression) -> bool {
+    let f_variables: Vec<&str> = f_ast.get_variables();
+    let e_variables: Vec<&str> = e_ast.get_variables();
 
     if f_variables != e_variables {
         return false;
     }
 
     let iterations = 2 << (f_variables.len() - 1);
-    let mut valuation: HashMap<char, bool> = HashMap::new();
+    let mut valuation = HashMap::new();
 
     for bitmask in 0..iterations {
         // Iterate the variables
@@ -229,8 +117,8 @@ fn check_equivalence(f_ast: &str, e_ast: &str) -> bool {
             valuation.insert(*var, bitmask & (1 << i) > 0);
         }
 
-        let f_value = evaluate(&f_ast, &valuation);
-        let e_value = evaluate(&e_ast, &valuation);
+        let f_value = f_ast.evaluate(&valuation);
+        let e_value = e_ast.evaluate(&valuation);
 
         if f_value != e_value {
             return false;
@@ -268,12 +156,16 @@ fn main() {
     let args = parse_args().expect("Failed to parse arguments");
     let formula = args.formula.expect("Argument required for --formula");
 
+    let lexer = lexer::Lexer::new(&formula);
+    let parser = parser::ExprParser::new();
+    let ast = parser.parse(lexer).unwrap();
+
     if args.truth_table {
-        generate_truth_table(&formula);
+        generate_truth_table(&ast);
     }
 
     if args.sat_solve {
-        if let Some(solution) = solve_satisfiability(&formula) {
+        if let Some(solution) = solve_satisfiability(&ast) {
             println!("\nSAT Solution: ");
             for (atom, value) in solution {
                 println!("{} - {}", atom, if value { "T".green() } else { "F".red() });
@@ -284,10 +176,8 @@ fn main() {
     }
 
     if let Some(valuation) = args.valuation {
-        let ast = shunting_yard(&formula);
         let map = generate_valuation(&valuation);
-
-        let value = evaluate(&ast, &map);
+        let value = ast.evaluate(&map);
 
         print!("Result of evaluation: ");
 
@@ -299,10 +189,10 @@ fn main() {
     }
 
     if let Some(entailment) = args.entailment {
-        let f_ast = shunting_yard(&formula);
-        let e_ast = shunting_yard(&entailment);
+        let lexer = lexer::Lexer::new(&entailment);
+        let entailment_ast = parser::ExprParser::new().parse(lexer).unwrap();
 
-        let entails = check_entailment(&f_ast, &e_ast);
+        let entails = check_entailment(&ast, &entailment_ast);
 
         println!(
             "{}",
@@ -315,10 +205,10 @@ fn main() {
     }
 
     if let Some(equality) = args.equality {
-        let f_ast = shunting_yard(&formula);
-        let e_ast = shunting_yard(&equality);
+        let lexer = lexer::Lexer::new(&equality);
+        let equality_ast = parser::ExprParser::new().parse(lexer).unwrap();
 
-        let equal = check_equivalence(&f_ast, &e_ast);
+        let equal = check_equivalence(&ast, &equality_ast);
 
         println!(
             "{}",
