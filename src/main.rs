@@ -78,7 +78,7 @@ fn solve_satisfiability(expression: &ast::Expression) -> Option<HashMap<&str, bo
 }
 
 fn check_entailment(f_ast: &ast::Expression, e_ast: &ast::Expression) -> bool {
-    let f_variables: Vec<&str> = f_ast.get_variables();
+    let f_variables = f_ast.get_variables();
 
     let iterations = 2 << (f_variables.len() - 1);
     let mut valuation = HashMap::new();
@@ -101,8 +101,8 @@ fn check_entailment(f_ast: &ast::Expression, e_ast: &ast::Expression) -> bool {
 }
 
 fn check_equivalence(f_ast: &ast::Expression, e_ast: &ast::Expression) -> bool {
-    let f_variables: Vec<&str> = f_ast.get_variables();
-    let e_variables: Vec<&str> = e_ast.get_variables();
+    let f_variables = f_ast.get_variables();
+    let e_variables = e_ast.get_variables();
 
     if f_variables != e_variables {
         return false;

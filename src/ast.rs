@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 #[derive(Copy, Clone, Debug)]
 pub enum BinaryOperator {
@@ -65,19 +65,21 @@ impl Expression {
         }
     }
 
-    pub fn get_variables(&self) -> Vec<&str> {
+    pub fn get_variables(&self) -> HashSet<&str> {
         use self::Expression::*;
 
-        let mut variables = Vec::new();
+        let mut variables = HashSet::new();
 
         match self {
             Binary { left, right, .. } => {
-                variables.extend_from_slice(&left.get_variables());
-                variables.extend_from_slice(&right.get_variables());
+                variables.extend(left.get_variables());
+                variables.extend(right.get_variables());
             }
-            Unary { expr, .. } => variables.extend_from_slice(&expr.get_variables()),
-            Identifier { value } => variables.push(&value),
-            Enclosed { inner } => variables.extend_from_slice(&inner.get_variables()),
+            Unary { expr, .. } => variables.extend(expr.get_variables()),
+            Identifier { value } => {
+                let _ = variables.insert(&value);
+            }
+            Enclosed { inner } => variables.extend(inner.get_variables()),
             _ => (),
         };
 
